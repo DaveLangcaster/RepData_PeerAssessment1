@@ -7,7 +7,8 @@ output:
     keep_md: true
 ---
 
-```{r}
+
+```r
 echo = TRUE #Display all code
 ```
 
@@ -43,21 +44,34 @@ The dataset is stored in a comma-separated-value (CSV) file and there are a tota
 
 ## Turning warnings off globally
 
-```{r}
+
+```r
 knitr::opts_chunk$set(warning=FALSE)
 ```
 
 ## 1. Loading and preprocessing the data
 
 First, load the data
-```{r}
+
+```r
 colclass = c("integer", "character", "integer")
 df <- read.csv("activity.csv", head=TRUE, colClasses=colclass, na.strings="NA")
 head(df)
 ```
+
+```
+##   steps       date interval
+## 1    NA 2012-10-01        0
+## 2    NA 2012-10-01        5
+## 3    NA 2012-10-01       10
+## 4    NA 2012-10-01       15
+## 5    NA 2012-10-01       20
+## 6    NA 2012-10-01       25
+```
 Next, process the data for analysis. Date columns need to be set to the correct format, and missing values need to be removed. The cleaned data is then saved to a new data frame, retaining the original dataset intact.
 
-```{r}
+
+```r
 df$date <- as.Date(df$date)
 df_sub <- subset(df, !is.na(df$steps))
 ```
@@ -66,7 +80,8 @@ df_sub <- subset(df, !is.na(df$steps))
 
 To answer this question, we plot a histogram showing the daily total number of steps.
 
-```{r}
+
+```r
 dailysteps <- tapply(df_sub$steps, df_sub$date, sum, na.rm=TRUE, simplify=T)
 dailysteps <- dailysteps[!is.na(dailysteps)]
 
@@ -78,15 +93,27 @@ hist(x=dailysteps,
      main="Distribution of total daily steps (missing data values excluded)")
 ```
 
+![](PA1_template_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 Finally, we need to calculate the mean total number of steps per day.
 
-```{r}
+
+```r
 mean(dailysteps)
+```
+
+```
+## [1] 10766.19
 ```
 We should also calculate the median to account for any skewness of the data.
 
-```{r}
+
+```r
 median(dailysteps)
+```
+
+```
+## [1] 10765
 ```
 
 ## 3. What is the average daily activity pattern?
