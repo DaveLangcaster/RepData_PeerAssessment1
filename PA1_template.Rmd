@@ -122,6 +122,79 @@ This turns out to be interval 835, with 206 steps.
 
 ## 4. Imputing missing values
 
+There are a number of days/intervals where there are missing values (coded as \color{red}{\verb|NA|}NA). The presence of missing days may introduce bias into some calculations or summaries of the data.
 
+We therefore have to calculate the number of missing values in the dataset.
 
-## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+sum(is.na(df$steps))
+```
+
+This shows that there are 2304 rows with missing data. A simple strategy to fill in the mssing values would be to use the mean for any 5-minute interval that has missing data.
+
+We need to create a new data frame that is completed using this strategy.
+
+```{r}
+df_impute <- df
+ndx <- is.na(df_impute$steps)
+int_avg <- tapply(df_sub$steps, df_sub$interval, mean, na.rm=TRUE, simplify=T)
+df_impute$steps[ndx] <- int_avg[as.character(df_impute$interval[ndx])]
+```
+
+Next, we need to create a new histogram, similar to that in 2. above, showing the total number of steps per day, that includes the imputed data.
+
+```{r}
+new_dailysteps <- tapply(df_impute$steps, df_impute$date, sum, na.rm=TRUE, simplify=T)
+
+hist(x=new_dailysteps,
+     col="blue",
+     breaks=20,
+     xlab="Total steps per day",
+     ylab="Frequency",
+     main="Distribution of total daily steps (missing data values imputed)")
+```
+Finally, we calculated the mean and median of the imputed data.
+
+```{r}
+mean(new_dailysteps)
+```
+```{r}
+median(new_dailysteps)
+```
+
+This shows a slight increase in the median, but the mean remains exactly the same. The missing values have little to no effect on the data.
+
+## 5. Are there differences in activity patterns between weekdays and weekends?
+
+To answer this question, we need to create a new factor variable 'wkday' in the dataset with two levels – “weekday” and “weekend” indicating whether a given date is a weekday or weekend day.
+
+We first create a helper function 'is_wkday()' to decide if a day is a weekday or not.
+```{r}
+is_wkday <- function(d) {
+    wd <- weekdays(d)
+    ifelse (wd == "Saturday" | wd == "Sunday", "weekend", "weekday")
+}
+```
+Then we use this to iterate between all the columns of the dataset to sort the weekdays from weekends.
+
+```{r}
+wd2 <- sapply(df_impute$date, is_wkday)
+df_impute$wkday <- as.factor(wd2)
+head(df_impute)
+```
+Finally, we create a panel plot containing a time series plot (i.e. \color{red}{\verb|type = "l"|}type="l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```{r}
+wd_df <- aggregate(steps ~ wkday+interval, data=df_impute, FUN=mean)
+
+library(lattice)
+xyplot(steps ~ interval | factor(wkday),
+       layout = c(1, 2),
+       xlab="Interval",
+       ylab="Number of steps",
+       type="l",
+       lty=1,
+       data=wd_df)
+```
+
+We can see that weekday activity seems to start earlier than weekend activity, and there is a peak of activity in the early morning on weekdays. Following this, the activity levels remain low throughout the day compared with weekends. On weekends activity starts later, but remains relatively high throughout the day.
